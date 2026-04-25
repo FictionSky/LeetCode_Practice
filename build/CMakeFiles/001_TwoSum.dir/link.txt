@@ -1,3 +1,0 @@
-D:\Software\VSCODE\cmake-4.1.1-windows-x86_64\bin\cmake.exe -E rm -f CMakeFiles\001_TwoSum.dir/objects.a
-D:\Software\VSCODE\mingw64\MinGW\bin\ar.exe qc CMakeFiles\001_TwoSum.dir/objects.a @CMakeFiles\001_TwoSum.dir\objects1.rsp
-D:\Software\VSCODE\mingw64\MinGW\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\001_TwoSum.dir/objects.a -Wl,--no-whole-archive -o bin\001_TwoSum.exe -Wl,--out-implib,lib001_TwoSum.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\001_TwoSum.dir\linkLibs.rsp

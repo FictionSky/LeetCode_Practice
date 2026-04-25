@@ -1,8 +1,0 @@
-[
-{
-  "directory": "D:/USER/Desktop/LeetCode_Practice/build",
-  "command": "D:\\Software\\VSCODE\\mingw64\\MinGW\\bin\\g++.exe   -g -std=gnu++17 -o CMakeFiles\\001_TwoSum.dir\\001\\001_TwoSum.cpp.obj -c D:\\USER\\Desktop\\LeetCode_Practice\\001\\001_TwoSum.cpp",
-  "file": "D:/USER/Desktop/LeetCode_Practice/001/001_TwoSum.cpp",
-  "output": "CMakeFiles/001_TwoSum.dir/001/001_TwoSum.cpp.obj"
-}
-]

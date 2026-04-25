@@ -1,3 +1,0 @@
-D:\Software\VSCODE\cmake-4.1.1-windows-x86_64\bin\cmake.exe -E rm -f CMakeFiles\CMakeCXXCompilerId.dir/objects.a
-D:\Software\VSCODE\mingw64\MinGW\bin\ar.exe qc CMakeFiles\CMakeCXXCompilerId.dir/objects.a @CMakeFiles\CMakeCXXCompilerId.dir\objects1.rsp
-D:\Software\VSCODE\mingw64\MinGW\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\CMakeCXXCompilerId.dir/objects.a -Wl,--no-whole-archive -o bin\CMakeCXXCompilerId.exe -Wl,--out-implib,libCMakeCXXCompilerId.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\CMakeCXXCompilerId.dir\linkLibs.rsp

@@ -1,11 +1,11 @@
-# 忽略 CMake 构建目录
-build/
+# # 忽略 CMake 构建目录
+# build/
 
-# 忽略所有可执行文件生成的目录
-bin/
+# # 忽略所有可执行文件生成的目录
+# bin/
 
-# 忽略所有的 .exe 文件
-*.exe
+# # 忽略所有的 .exe 文件
+# *.exe
 
-# 忽略 VSCode 的本地配置（可选）
-.vscode/
+# # 忽略 VSCode 的本地配置（可选）
+# .vscode/
