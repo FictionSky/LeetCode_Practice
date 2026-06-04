@@ -340,7 +340,22 @@ def default_return(return_type: str) -> str:
 
 
 def type_includes(problem):
-    includes = {"#include <iostream>", "#include <string>", "#include <vector>"}
+    includes = {
+        "#include <algorithm>",
+        "#include <cstdint>",
+        "#include <deque>",
+        "#include <iostream>",
+        "#include <list>",
+        "#include <map>",
+        "#include <numeric>",
+        "#include <queue>",
+        "#include <set>",
+        "#include <stack>",
+        "#include <string>",
+        "#include <unordered_map>",
+        "#include <unordered_set>",
+        "#include <vector>",
+    }
     joined = " ".join(problem.get("params", []))
     return_type = problem.get("return_type", "")
     if "uint32_t" in joined or return_type == "uint32_t":
@@ -974,13 +989,105 @@ def cpp_tree_vector_expr(values):
     return "vector<string>" + cpp_tree_literal(values)
 
 
+def sample_value_for_type(type_name):
+    clean_type = type_name.replace("const ", "").strip()
+    if clean_type in {"int", "uint32_t"}:
+        return 0
+    if clean_type == "double":
+        return 0.0
+    if clean_type == "bool":
+        return False
+    if clean_type == "string":
+        return ""
+    if clean_type == "char":
+        return "a"
+    if clean_type.startswith("vector<"):
+        return []
+    if clean_type.endswith("*"):
+        return None
+    return 0
+
+
+def generic_mutated_param(problem):
+    for param in problem.get("params", []):
+        if "&" in param:
+            return param_name(param)
+    return param_name(problem["params"][0])
+
+
+def problem_with_generic_local_case(problem):
+    enriched = dict(problem)
+    args = [sample_value_for_type(param_value_type(param)) for param in problem["params"]]
+    expected_type = problem["return_type"]
+    if problem["return_type"] == "void":
+        mutated = generic_mutated_param(problem)
+        enriched["mutates"] = mutated
+        expected_type = param_value_type(next(param for param in problem["params"] if param_name(param) == mutated))
+    enriched["local_cases"] = [
+        {
+            "label": "模板样例",
+            "args": args,
+            "expected": sample_value_for_type(expected_type),
+        }
+    ]
+    return enriched
+
+
+def build_generic_md(problem):
+    guide = CATEGORY_GUIDANCE[problem["category"]]
+    title = problem["title"]
+    pid = zero_pad(problem["id"])
+    url = f"https://leetcode.com/problems/{slugify(title)}/"
+    hints = "\n".join(f"- {item}" for item in guide["hints"])
+
+    return f"""# {problem['id']}. {title}
+
+## 题目链接
+
+- {url}
+
+## 题目要求
+
+- 先打开原题，确认输入、输出和有效答案的定义。
+- 用中文把题意复述一遍，再开始补全代码。
+- 本模板只保留练习入口，不直接提供完整题解。
+
+## 示例
+
+- 请从原题中选一个官方示例，手动写到你的练习记录里。
+
+## 约束条件
+
+- 请读题后记录输入规模、取值范围和需要特别处理的边界情况。
+
+## 推荐题型
+
+- 主模式：`{guide['pattern']}`
+
+## 提示
+
+{hints}
+
+## 复杂度目标
+
+- {guide['complexity']}
+
+## 本地练习清单
+
+- 先完整读一遍原题。
+- 再用自己的中文把题意复述一遍。
+- 在 `{pid}_{pascal_file_name(title)}.cpp` 的待实现区域补全算法。
+- 运行本地样例，对照“当前结果”和“预期结果”。
+"""
+
+
 def has_round1_practice_data(problem):
     return "local_cases" in problem and "summary" in problem
 
 
 def build_md(problem):
     if not has_round1_practice_data(problem):
-        return legacy_build_md(problem)
+        return build_generic_md(problem)
 
     guide = CATEGORY_GUIDANCE[problem["category"]]
     title = problem["title"]
@@ -997,6 +1104,8 @@ def build_md(problem):
         )
 
     constraints = "\n".join(f"- {item}" for item in problem["constraints"])
+    approach_items = problem.get("approach", guide["hints"])
+    approach = "\n".join(f"- {item}" for item in approach_items)
     hints = "\n".join(f"- {item}" for item in guide["hints"])
 
     return f"""# {problem['id']}. {title}
@@ -1017,6 +1126,10 @@ def build_md(problem):
 
 {constraints}
 
+## 解题思路
+
+{approach}
+
 ## 推荐题型
 
 - 主模式：`{guide['pattern']}`
@@ -1033,7 +1146,7 @@ def build_md(problem):
 
 - 先完整读一遍原题。
 - 再用自己的中文把题意复述一遍。
-- 在 `{pid}_{pascal_file_name(title)}.cpp` 的 `TODO` 区域补全算法。
+- 在 `{pid}_{pascal_file_name(title)}.cpp` 的待实现区域补全算法。
 - 运行本地样例，对照“当前结果”和“预期结果”。
 """
 
@@ -1191,6 +1304,35 @@ ListNode* appendSharedTail(const vector<int>& prefix, ListNode* sharedTail) {
 """
 
 
+def build_listnode_param_setup(problem, case):
+    params = problem["params"]
+    setup_lines = []
+    call_args = []
+
+    if len(params) == 1 and param_value_type(params[0]) == "vector<ListNode*>":
+        list_vars = []
+        for index, values in enumerate(case["lists"]):
+            var_name = f"list{index + 1}"
+            list_vars.append(var_name)
+            setup_lines.append(f"        ListNode* {var_name} = buildList({cpp_literal(values)});")
+        setup_lines.append(f"        vector<ListNode*> lists = {{{', '.join(list_vars)}}};")
+        return "\n".join(setup_lines), ["lists"]
+
+    list_index = 0
+    extra_args = list(case.get("args", []))
+    for param in params:
+        if param_value_type(param) == "ListNode*":
+            list_index += 1
+            var_name = f"list{list_index}"
+            values = case["lists"][list_index - 1]
+            setup_lines.append(f"        ListNode* {var_name} = buildList({cpp_literal(values)});")
+            call_args.append(var_name)
+        else:
+            call_args.append(cpp_literal(extra_args.pop(0), param_value_type(param)))
+
+    return "\n".join(setup_lines), call_args
+
+
 def build_listnode_run_case(problem):
     method = problem["method"]
     cases = []
@@ -1232,18 +1374,12 @@ def build_listnode_run_case(problem):
             )
     else:
         for case in problem["local_cases"]:
-            list_vars = []
-            for index, values in enumerate(case["lists"]):
-                var_name = f"list{index + 1}"
-                list_vars.append(var_name)
-                cases.append("")
-            extra_args = [cpp_literal(value) for value in case.get("args", [])]
-            call_args = list_vars + extra_args
-            setup = "\n".join(
-                f"        ListNode* {var_name} = buildList({cpp_literal(values)});"
-                for var_name, values in zip(list_vars, case["lists"])
-            )
-            if problem["return_type"] == "bool":
+            setup, call_args = build_listnode_param_setup(problem, case)
+            if problem["return_type"] == "void":
+                actual_line = f"        solution.{method}({', '.join(call_args)});"
+                print_actual = "        printValue(listToVector(list1));"
+                expected = cpp_expected_expr(case["expected"], "vector<int>")
+            elif problem["return_type"] == "bool":
                 actual_line = f"        bool actual = solution.{method}({', '.join(call_args)});"
                 print_actual = "        printValue(actual);"
                 expected = cpp_bool(case["expected"])
@@ -1271,6 +1407,130 @@ int main() {{
     cout << "练习目标：{problem['id']}. {problem['title']}" << '\\n';
     cout << "只需要补全 {method}() 的 TODO 区域，再重新运行本地样例。" << "\\n\\n";
 {chr(10).join(case for case in cases if case)}
+    return 0;
+}}
+"""
+
+
+def build_random_list_helpers():
+    return """Node* buildRandomList(const vector<pair<int, int>>& nodes) {
+    if (nodes.empty()) {
+        return nullptr;
+    }
+
+    vector<Node*> built;
+    for (const auto& item : nodes) {
+        built.push_back(new Node(item.first));
+    }
+    for (size_t i = 0; i + 1 < built.size(); ++i) {
+        built[i]->next = built[i + 1];
+    }
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        int randomIndex = nodes[i].second;
+        if (randomIndex >= 0) {
+            built[i]->random = built[randomIndex];
+        }
+    }
+    return built[0];
+}
+
+vector<vector<int>> randomListToPairs(Node* head, size_t limit = 100) {
+    vector<Node*> nodes;
+    unordered_map<Node*, int> indexByNode;
+    Node* current = head;
+    while (current != nullptr && nodes.size() < limit) {
+        indexByNode[current] = static_cast<int>(nodes.size());
+        nodes.push_back(current);
+        current = current->next;
+    }
+
+    vector<vector<int>> result;
+    for (Node* node : nodes) {
+        int randomIndex = node->random == nullptr ? -1 : indexByNode[node->random];
+        result.push_back({node->val, randomIndex});
+    }
+    return result;
+}
+
+"""
+
+
+def cpp_pair_vector_literal(values):
+    return "{" + ", ".join("{" + f"{item[0]}, {item[1]}" + "}" for item in values) + "}"
+
+
+def build_random_list_run_case(problem):
+    method = problem["method"]
+    cases = []
+    for case in problem["local_cases"]:
+        expected = cpp_expected_expr(case["expected"], "vector<vector<int>>")
+        cases.append(
+            f"""    {{
+        Node* head = buildRandomList({cpp_pair_vector_literal(case['nodes'])});
+        Node* actual = solution.{method}(head);
+        cout << {cpp_string(case['label'])} << '\\n';
+        cout << "当前结果：";
+        printValue(randomListToPairs(actual));
+        cout << '\\n';
+        cout << "预期结果：";
+        printValue({expected});
+        cout << "\\n\\n";
+    }}"""
+        )
+
+    return f"""
+int main() {{
+    Solution solution;
+    cout << "练习目标：{problem['id']}. {problem['title']}" << '\\n';
+    cout << "只需要补全 {method}() 的 TODO 区域，再重新运行本地样例。" << "\\n\\n";
+{chr(10).join(cases)}
+    return 0;
+}}
+"""
+
+
+def build_codec_body_only():
+    return """class Codec {
+public:
+    string serialize(TreeNode* root) {
+        // TODO：把二叉树编码成字符串。
+        (void)root;
+        return "";
+    }
+
+    TreeNode* deserialize(string data) {
+        // TODO：把字符串还原成二叉树。
+        (void)data;
+        return nullptr;
+    }
+};
+"""
+
+
+def build_codec_run_case(problem):
+    cases = []
+    for case in problem["local_cases"]:
+        cases.append(
+            f"""    {{
+        TreeNode* root = buildTree({cpp_tree_literal(case['tree'])});
+        string encoded = codec.serialize(root);
+        TreeNode* actual = codec.deserialize(encoded);
+        cout << {cpp_string(case['label'])} << '\\n';
+        cout << "当前结果：";
+        printValue(treeToLevelVector(actual));
+        cout << '\\n';
+        cout << "预期结果：";
+        printValue({cpp_tree_vector_expr(case['expected'])});
+        cout << "\\n\\n";
+    }}"""
+        )
+
+    return f"""
+int main() {{
+    Codec codec;
+    cout << "练习目标：{problem['id']}. {problem['title']}" << '\\n';
+    cout << "只需要补全 Codec 的 TODO 方法，再重新运行本地样例。" << "\\n\\n";
+{chr(10).join(cases)}
     return 0;
 }}
 """
@@ -1333,6 +1593,119 @@ vector<string> treeToLevelVector(TreeNode* root) {
     return values;
 }
 
+TreeNode* findNode(TreeNode* root, int value) {
+    if (root == nullptr) {
+        return nullptr;
+    }
+    if (root->val == value) {
+        return root;
+    }
+    TreeNode* left = findNode(root->left, value);
+    if (left != nullptr) {
+        return left;
+    }
+    return findNode(root->right, value);
+}
+
+vector<int> rightChainToVector(TreeNode* root, size_t limit = 100) {
+    vector<int> values;
+    TreeNode* current = root;
+    while (current != nullptr && values.size() < limit) {
+        values.push_back(current->val);
+        current = current->right;
+    }
+    return values;
+}
+
+"""
+
+
+def build_next_tree_helpers():
+    return """Node* buildNextTree(const vector<string>& values) {
+    if (values.empty() || values[0] == "null") {
+        return nullptr;
+    }
+
+    Node* root = new Node(stoi(values[0]));
+    queue<Node*> pending;
+    pending.push(root);
+    size_t index = 1;
+
+    while (!pending.empty() && index < values.size()) {
+        Node* node = pending.front();
+        pending.pop();
+
+        if (index < values.size() && values[index] != "null") {
+            node->left = new Node(stoi(values[index]));
+            pending.push(node->left);
+        }
+        ++index;
+
+        if (index < values.size() && values[index] != "null") {
+            node->right = new Node(stoi(values[index]));
+            pending.push(node->right);
+        }
+        ++index;
+    }
+
+    return root;
+}
+
+vector<vector<int>> nextLevelsToVector(Node* root) {
+    vector<vector<int>> levels;
+    Node* levelStart = root;
+
+    while (levelStart != nullptr) {
+        vector<int> level;
+        Node* current = levelStart;
+        Node* nextStart = nullptr;
+        while (current != nullptr) {
+            level.push_back(current->val);
+            if (nextStart == nullptr) {
+                if (current->left != nullptr) {
+                    nextStart = current->left;
+                } else if (current->right != nullptr) {
+                    nextStart = current->right;
+                }
+            }
+            current = current->next;
+        }
+        levels.push_back(level);
+        levelStart = nextStart;
+    }
+
+    return levels;
+}
+
+"""
+
+
+def build_nextnode_run_case(problem):
+    method = problem["method"]
+    cases = []
+    for case in problem["local_cases"]:
+        cases.append(
+            f"""    {{
+        Node* root = buildNextTree({cpp_tree_literal(case['tree'])});
+        Node* actual = solution.{method}(root);
+        cout << {cpp_string(case['label'])} << '\\n';
+        cout << "当前结果：";
+        printValue(nextLevelsToVector(actual));
+        cout << '\\n';
+        cout << "预期结果：";
+        printValue({cpp_expected_expr(case['expected'], 'vector<vector<int>>')});
+        cout << "\\n\\n";
+    }}"""
+        )
+
+    return f"""
+int main() {{
+    Solution solution;
+    cout << "练习目标：{problem['id']}. {problem['title']}" << '\\n';
+    cout << "只需要补全 {method}() 的 TODO 区域，再重新运行本地样例。" << "\\n\\n";
+{chr(10).join(cases)}
+    return 0;
+}}
 """
 
 
@@ -1340,7 +1713,18 @@ def build_treenode_run_case(problem):
     method = problem["method"]
     cases = []
     for case in problem["local_cases"]:
-        if "trees" in case:
+        consumed_case_args = False
+        if "args" in case and "tree" not in case and "trees" not in case:
+            setup = ""
+            call_args = []
+            for param, value in zip(problem["params"], case["args"]):
+                value_type = param_value_type(param)
+                var_name = param_name(param)
+                setup += f"        {value_type} {var_name} = {cpp_expected_expr(value, value_type)};\n"
+                call_args.append(var_name)
+            setup = setup.rstrip()
+            consumed_case_args = True
+        elif "trees" in case:
             setup = "\n".join(
                 f"        TreeNode* tree{index + 1} = buildTree({cpp_tree_literal(values)});"
                 for index, values in enumerate(case["trees"])
@@ -1349,12 +1733,25 @@ def build_treenode_run_case(problem):
         else:
             setup = f"        TreeNode* root = buildTree({cpp_tree_literal(case['tree'])});"
             call_args = ["root"]
-        call_args.extend(cpp_literal(value) for value in case.get("args", []))
+        for index, value in enumerate(case.get("node_values", []), start=1):
+            var_name = f"node{index}"
+            setup += f"\n        TreeNode* {var_name} = findNode(root, {value});"
+            call_args.append(var_name)
+        if not consumed_case_args:
+            call_args.extend(cpp_literal(value) for value in case.get("args", []))
 
-        if problem["return_type"] == "TreeNode*":
+        if problem["return_type"] == "void":
+            actual_line = f"        solution.{method}({', '.join(call_args)});"
+            print_actual = "        printValue(rightChainToVector(root));"
+            expected = cpp_expected_expr(case["expected"], "vector<int>")
+        elif problem["return_type"] == "TreeNode*":
             actual_line = f"        TreeNode* actual = solution.{method}({', '.join(call_args)});"
-            print_actual = "        printValue(treeToLevelVector(actual));"
-            expected = cpp_tree_vector_expr(case["expected"])
+            if isinstance(case["expected"], int):
+                print_actual = "        printValue(actual == nullptr ? -1 : actual->val);"
+                expected = str(case["expected"])
+            else:
+                print_actual = "        printValue(treeToLevelVector(actual));"
+                expected = cpp_tree_vector_expr(case["expected"])
         else:
             actual_line = f"        auto actual = solution.{method}({', '.join(call_args)});"
             print_actual = "        printValue(actual);"
@@ -1507,111 +1904,92 @@ def build_graph_run_case(problem):
 """
 
 
+def design_class_name(kind):
+    return {
+        "design_minstack": "MinStack",
+        "design_randomizedset": "RandomizedSet",
+        "design_myqueue": "MyQueue",
+        "design_mystack": "MyStack",
+        "design_trie": "Trie",
+        "design_worddictionary": "WordDictionary",
+        "design_bstiterator": "BSTIterator",
+        "design_kthlargest": "KthLargest",
+        "design_medianfinder": "MedianFinder",
+        "design_mapsum": "MapSum",
+        "design_stockspanner": "StockSpanner",
+        "design_lrucache": "LRUCache",
+        "design_lfu_cache": "LFUCache",
+        "design_allone": "AllOne",
+    }[kind]
+
+
 def build_design_body_only(problem):
-    if problem["kind"] == "design_minstack":
-        return """class MinStack {
-public:
-    MinStack() {}
+    return build_design_class(problem).split("\nint main() {", 1)[0]
 
-    void push(int val) {
-        (void)val;
-        // TODO：实现 push。
-    }
 
-    void pop() {
-        // TODO：实现 pop。
-    }
+def cpp_design_arg(value):
+    if isinstance(value, str):
+        return cpp_string(value)
+    if isinstance(value, bool):
+        return cpp_bool(value)
+    if isinstance(value, float):
+        return repr(value)
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, list):
+        return "{" + ", ".join(cpp_design_arg(item) for item in value) + "}"
+    raise TypeError(f"Unsupported design argument: {value!r}")
 
-    int top() {
-        // TODO：返回当前栈顶元素。
-        return 0;
-    }
 
-    int getMin() {
-        // TODO：返回当前最小值。
-        return 0;
-    }
-};
-"""
-    if problem["kind"] == "design_myqueue":
-        return """class MyQueue {
-public:
-    MyQueue() {}
-
-    void push(int x) {
-        (void)x;
-        // TODO：实现 push。
-    }
-
-    int pop() {
-        // TODO：实现 pop。
-        return 0;
-    }
-
-    int peek() {
-        // TODO：实现 peek。
-        return 0;
-    }
-
-    bool empty() {
-        // TODO：返回队列是否为空。
-        return true;
-    }
-};
-"""
-    return """class MyStack {
-public:
-    MyStack() {}
-
-    void push(int x) {
-        (void)x;
-        // TODO：实现 push。
-    }
-
-    int pop() {
-        // TODO：实现 pop。
-        return 0;
-    }
-
-    int top() {
-        // TODO：实现 top。
-        return 0;
-    }
-
-    bool empty() {
-        // TODO：返回栈是否为空。
-        return true;
-    }
-};
-"""
+def design_result_line(operation, class_name):
+    string_methods = {"getMaxKey", "getMinKey"}
+    bool_methods = {"insert", "remove", "search", "startsWith", "empty", "hasNext"}
+    double_methods = {"findMedian"}
+    if operation in string_methods:
+        return f"    actual.push_back(solution.{operation}());"
+    if operation in bool_methods:
+        return f"    actual.push_back(solution.{operation}(%s) ? \"true\" : \"false\");"
+    if operation in double_methods:
+        return f"    actual.push_back(to_string(solution.{operation}()));"
+    return f"    actual.push_back(to_string(solution.{operation}(%s)));"
 
 
 def build_design_run_case(problem):
-    class_name = {
-        "design_minstack": "MinStack",
-        "design_myqueue": "MyQueue",
-        "design_mystack": "MyStack",
-    }[problem["kind"]]
+    class_name = design_class_name(problem["kind"])
     case = problem["local_cases"][0]
-    lines = [f"    {class_name} solution;", '    vector<string> actual = {"null"};']
+    setup_lines = []
+
+    if class_name == "BSTIterator":
+        setup_lines.append(f"    TreeNode* root = buildTree({cpp_tree_literal(case['inputs'][0][0])});")
+        constructor = "BSTIterator solution(root);"
+    elif class_name == "KthLargest":
+        setup_lines.append(f"    vector<int> initialNumbers = {cpp_expected_expr(case['inputs'][0][1], 'vector<int>')};")
+        constructor = f"KthLargest solution({cpp_design_arg(case['inputs'][0][0])}, initialNumbers);"
+    else:
+        constructor_args = ", ".join(cpp_design_arg(item) for item in case["inputs"][0])
+        constructor = f"{class_name} solution;" if not constructor_args else f"{class_name} solution({constructor_args});"
+
+    lines = setup_lines + [f"    {constructor}", '    vector<string> actual = {"null"};']
     for operation, inputs in zip(case["operations"][1:], case["inputs"][1:]):
-        if operation == "push":
-            lines.append(f"    solution.push({inputs[0]});")
+        args = ", ".join(cpp_design_arg(item) for item in inputs)
+        if operation in {"push", "put", "addWord", "insert", "addNum", "inc", "dec"} and operation not in {"insert"}:
+            lines.append(f"    solution.{operation}({args});")
             lines.append('    actual.push_back("null");')
-        elif operation == "pop":
-            if class_name == "MyQueue" or class_name == "MyStack":
-                lines.append("    actual.push_back(to_string(solution.pop()));")
+        elif operation == "insert" and class_name not in {"RandomizedSet", "MapSum", "Trie"}:
+            lines.append(f"    solution.{operation}({args});")
+            lines.append('    actual.push_back("null");')
+        elif operation == "insert" and class_name in {"MapSum", "Trie"}:
+            lines.append(f"    solution.{operation}({args});")
+            lines.append('    actual.push_back("null");')
+        elif operation == "pop" and class_name == "MinStack":
+            lines.append("    solution.pop();")
+            lines.append('    actual.push_back("null");')
+        else:
+            template = design_result_line(operation, class_name)
+            if "%s" in template:
+                lines.append(template % args)
             else:
-                lines.append("    solution.pop();")
-                lines.append('    actual.push_back("null");')
-        elif operation == "top":
-            lines.append("    actual.push_back(to_string(solution.top()));")
-        elif operation == "getMin":
-            lines.append("    actual.push_back(to_string(solution.getMin()));")
-        elif operation == "peek":
-            lines.append("    actual.push_back(to_string(solution.peek()));")
-        elif operation == "empty":
-            lines.append('    actual.push_back(solution.empty() ? "true" : "false");')
+                lines.append(template)
 
     return f"""int main() {{
     cout << "练习目标：{problem['id']}. {problem['title']}" << '\\n';
@@ -1629,8 +2007,32 @@ def build_design_run_case(problem):
 """
 
 
+def clean_legacy_exercise_output(cpp_text):
+    return (
+        cpp_text.replace("当前结果：尚未执行真实样例", "当前结果：练习模板已加载")
+        .replace("预期结果：请在补充测试后自行填写", "预期结果：补全 TODO 后再对照官方示例")
+    )
+
+
+def build_generic_cpp(problem):
+    if problem["kind"] != "solution":
+        return clean_legacy_exercise_output(legacy_build_cpp(problem))
+
+    problem = problem_with_generic_local_case(problem)
+    sections = [
+        "\n".join(type_includes(problem)),
+        "",
+        "using namespace std;",
+        "",
+        build_print_helpers(),
+        build_solution_body(problem),
+        build_solution_run_case(problem),
+    ]
+    return "\n".join(sections).strip() + "\n"
+
+
 def round1_includes(problem):
-    includes = {"#include <iostream>", "#include <string>", "#include <vector>"}
+    includes = set(type_includes(problem))
     if problem["kind"] in {"treenode", "graph_node"}:
         includes.add("#include <queue>")
     if problem["kind"] == "graph_node":
@@ -1641,7 +2043,7 @@ def round1_includes(problem):
 
 def build_cpp(problem):
     if not has_round1_practice_data(problem):
-        return legacy_build_cpp(problem)
+        return build_generic_cpp(problem)
 
     sections = ["\n".join(round1_includes(problem)), "", "using namespace std;", "", build_print_helpers()]
     kind = problem["kind"]
@@ -1651,11 +2053,26 @@ def build_cpp(problem):
         sections.append(build_list_helpers())
         sections.append(build_solution_body(problem))
         sections.append(build_listnode_run_case(problem))
+    elif kind == "random_list_node":
+        sections.append(build_random_list_node_struct())
+        sections.append(build_random_list_helpers())
+        sections.append(build_solution_body(problem))
+        sections.append(build_random_list_run_case(problem))
     elif kind == "treenode":
         sections.append(build_treenode_struct())
         sections.append(build_tree_helpers())
         sections.append(build_solution_body(problem))
         sections.append(build_treenode_run_case(problem))
+    elif kind == "nextnode_tree":
+        sections.append(build_next_node_struct())
+        sections.append(build_next_tree_helpers())
+        sections.append(build_solution_body(problem))
+        sections.append(build_nextnode_run_case(problem))
+    elif kind == "codec_tree":
+        sections.append(build_treenode_struct())
+        sections.append(build_tree_helpers())
+        sections.append(build_codec_body_only())
+        sections.append(build_codec_run_case(problem))
     elif kind == "graph_node":
         sections.append(build_graph_node_struct())
         sections.append(build_graph_helpers())
@@ -1670,6 +2087,9 @@ def build_cpp(problem):
         sections.append(build_solution_body(problem))
         sections.append(build_api_run_case(problem, "secretNumberForLocalTest", "secret"))
     elif kind.startswith("design_"):
+        if kind == "design_bstiterator":
+            sections.append(build_treenode_struct())
+            sections.append(build_tree_helpers())
         sections.append(build_design_body_only(problem))
         sections.append(build_design_run_case(problem))
     else:
