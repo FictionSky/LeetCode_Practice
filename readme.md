@@ -1,24 +1,65 @@
-# LeetCode C++ 算法练习笔记 🚀
+# LeetCode C++ Practice
 
-本项目用于记录我在 LeetCode 上的算法练习过程。采用 C++ 语言实现，并利用 CMake 构建系统进行本地管理与调试。
+这个仓库用于按题号整理 LeetCode C++ 练习，并通过 CMake 做本地编译与运行。
 
-## 🛠️ 环境配置
+## 环境
 
-- **语言标准**: C++ 17
-- **构建工具**: CMake (3.12+)
-- **编译器**: MinGW-w64 (GCC 8.1.0+)
-- **编辑器**: VSCode
+- 语言标准：`C++17`
+- 构建工具：`CMake 3.12+`
+- 编译器：`MinGW-w64 / GCC`
+- 编辑器：`VSCode`
 
-## 📂 项目结构
+## 目录结构
 
-本项目采用自动扫描机制，可以直接在根目录或子目录下添加 `.cpp` 文件：
+所有题目统一放在 `problems/` 下，避免根目录随着题量增加变得混乱。
 
 ```text
 LeetCode_Practice/
-├── .gitignore           # 忽略 build、exe 等无用文件
-├── CMakeLists.txt       # 核心构建配置文件
-├── README.md            # 项目说明文档
-├── 001/                 # 按题号分类
-│   └── 001_TwoSum.cpp
-└── 002/
-    └── 002_AddTwoNumbers.cpp
+├── .gitignore
+├── CMakeLists.txt
+├── readme.md
+├── problems/
+│   ├── 001/
+│   │   ├── 001.md
+│   │   └── 001_TwoSum.cpp
+│   ├── 002/
+│   │   ├── 002.md
+│   │   └── 002_AddTwoNumbers.cpp
+│   └── ...
+└── docs/
+```
+
+## 模板规则
+
+每道题通常包含两个文件：
+
+- 一个 `md` 文件，记录中文题目说明、提示和复杂度目标
+- 一个 `cpp` 文件，作为本地练习模板
+
+练习模板遵循下面的规则：
+
+- 保留 `Solution` 签名，或题目要求的设计类名称
+- 保留本地 `main`
+- 注释使用中文，明确告诉你应该在哪里写代码
+- 运行输出使用中文，方便你直接看本地测试结果
+- 不直接提供最终可提交答案
+
+## 构建
+
+先配置：
+
+```bash
+cmake -S . -B build
+```
+
+构建单题：
+
+```bash
+cmake --build build --target 001_TwoSum
+```
+
+运行：
+
+```bash
+build/bin/001_TwoSum.exe
+```
