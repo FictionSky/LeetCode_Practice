@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <unordered_set>
 using namespace std;
 
 void printValue(bool value) {
@@ -54,7 +54,15 @@ public:
         // - 先想清楚：在一次扫描过程中，哪些信息需要被及时记录下来。
         // - 考虑是否可以用额外空间换取更快的查找速度。
 
-        (void)nums;
+        unordered_set<int>map;
+        for (int i:nums)
+        {
+            if (map.find(i) != map.end())
+            {
+                return true;
+            }
+            map.insert(i);
+        }
         return false;
     }
 };
@@ -74,7 +82,8 @@ void runCase(const string& label, vector<int> nums, bool expected) {
 int main() {
     cout << "练习目标：217. Contains Duplicate" << '\n';
     cout << "只需要补全 containsDuplicate() 的 TODO 区域，再重新运行本地样例。" << "\n\n";
-    runCase("示例 1", {1, 2, 3, 1}, true);
-    runCase("示例 2", {1, 2, 3, 4}, false);
+    runCase("示例 1", { 3, 3}, true);
+    runCase("示例 2", {1, 2, 3, 1}, true);
+    runCase("示例 3", {1, 2, 3, 4}, false);
     return 0;
 }

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <unordered_map>  //  基于哈希表实现的关联容器
 using namespace std;
 
 void printValue(bool value) {
@@ -53,9 +53,17 @@ public:
         // 入门提示：
         // - 先想清楚：在一次扫描过程中，哪些信息需要被及时记录下来。
         // - 考虑是否可以用额外空间换取更快的查找速度。
-
-        (void)nums;
-        (void)target;
+        unordered_map<int, int>map;
+        for (int i = 0; i < nums.size(); ++i)
+        {
+            int comp = target - nums[i];
+            if (map.find(comp) != map.end())
+            {
+                return {map[comp],i};
+            }
+            map[nums[i]] = i;
+        }
+        
         return {};
     }
 };

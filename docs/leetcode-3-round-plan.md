@@ -43,7 +43,7 @@
 #### Round 1 题号
 
 1. `1` Two Sum  √
-2. `217` Contains Duplicate
+2. `217` Contains Duplicate 
 3. `242` Valid Anagram
 4. `20` Valid Parentheses
 5. `121` Best Time to Buy and Sell Stock
