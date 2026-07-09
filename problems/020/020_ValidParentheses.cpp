@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <stack>
 using namespace std;
 
 void printValue(bool value) {
@@ -53,8 +53,38 @@ public:
         // 入门提示：
         // - 先判断题目需要的是后进先出还是先进先出。
         // - 如果是单调结构，先定义清楚它维护的是哪种顺序。
+        stack<char> q;
+        char t;
+        for (char ch:s)
+        {
+            if (ch == '(' || ch == '{' || ch == '[')
+            {
+                q.push(ch);
+                continue;
+            }
 
-        (void)s;
+            if(ch == ')' || ch== '}' || ch == ']')
+            {
+                if(q.empty()) return false;
+                t = q.top();
+                if(t == '(' && ch == ')'){
+                    q.pop();
+                }
+                else if (t == '[' && ch == ']')
+                {
+                    q.pop();
+                }
+                else if (t == '{' && ch == '}')
+                {
+                    q.pop();
+                }
+                else{
+                    return false;
+                }
+                
+            }
+        }
+        if (q.empty()) return true;
         return false;
     }
 };
@@ -77,5 +107,6 @@ int main() {
     runCase("示例 1", "()[]{}", true);
     runCase("示例 2", "(]", false);
     runCase("示例 3", "([])", true);
+    runCase("示例 4", "([)]", false);
     return 0;
 }

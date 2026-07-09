@@ -36,16 +36,46 @@ categories:
 **系统已有规范**
 关于categories,选择slug为leetcode,其他不添加
 
-本站已在 WordPress 后台预建了标准的算法核心专题标签，在写leetcode算法题解文章时，Frontmatter 的 `tags` 字段**必须且只能**填写以下已有的标签别名（Slug），严禁直接填写中文名称，否则发布脚本会因找不到对应数据而报错：
+本站已在 WordPress 后台预建了适配 LeetCode 刷题的常用专题标签。在写 LeetCode 算法题解文章时，Frontmatter 的 `tags` 字段**必须且只能**填写以下已有标签的别名（Slug），严禁直接填写中文名称，否则发布脚本会因找不到对应数据而报错：
+
 - 哈希表：`hash-table`
 - 数组：`array`
-- 双指针：`two-pointers`
 - 字符串：`string`
-- 动态规划：`dynamic-programming`
 - 链表：`linked-list`
+- 栈：`stack`
+- 队列：`queue`
+- 堆：`heap`
+- 优先队列：`priority-queue`
+- 双指针：`two-pointers`
+- 滑动窗口：`sliding-window`
+- 二分查找：`binary-search`
+- 贪心：`greedy`
+- 回溯：`backtracking`
+- 递归：`recursion`
+- 排序：`sorting`
+- 动态规划：`dynamic-programming`
+- 单调栈：`monotonic-stack`
+- 单调队列：`monotonic-queue`
+- 前缀和：`prefix-sum`
+- 区间：`interval`
 - 二叉树：`binary-tree`
+- 图：`graph`
+- 深度优先搜索：`depth-first-search`
+- 广度优先搜索：`breadth-first-search`
+- 拓扑排序：`topological-sort`
+- 最短路：`shortest-path`
+- 并查集：`union-find`
+- Trie / 前缀树：`trie`
+- 位运算：`bit-manipulation`
+- 矩阵：`matrix`
+- 设计：`design`
+- 模拟：`simulation`
 
-如果后续有要添加，请提前说明
+LeetCode 题解的 `tags` 建议只保留 **1 到 3 个最核心标签**：
+
+- 优先写题目的主数据结构或主算法模式，例如 `stack`、`heap`、`dynamic-programming`。
+- 不要为了“覆盖全面”一次性堆很多相关标签，避免把 `graph`、`depth-first-search`、`breadth-first-search`、`shortest-path` 同时全写上。
+- 如果某个标签未来要新增，先在 WordPress 后台创建对应 tag，再同步把 slug 补到这里。
 ## VS Code 通用发布到 WordPress
 
 下面这部分尽量写成通用流程，适用于大多数“VS Code 写 Markdown + 本地发布脚本 + WordPress REST API”的方案。具体到某个项目时，命令名、配置项名、支持语法和字段范围可能略有不同。
@@ -420,8 +450,13 @@ render{
 }
 
 ### 普通代码块
-
-推荐写法：
+优先使用兼容围栏写法
+```js
+function hello() {
+  console.log("Hello FictionSky");
+}
+```
+其次推荐写法：
 
 code js{
 console.log("Hello FictionSky");
@@ -431,7 +466,7 @@ console.log("Hello FictionSky");
 
 主题代码高亮会自动处理 `pre > code`，并增加行号、复制、折行、全屏按钮。写文章时优先使用 `code js{}`、`code python{}` 这种写法，不需要手写最终 HTML。只有在你明确要控制最终结构时，才使用 `html{}`。
 
-如果代码里本身会出现单独一行的 `}`，请改用兼容围栏写法：
+如果代码里本身会出现单独一行的 `}`，优先使用兼容围栏写法：
 
 ```js
 function hello() {
