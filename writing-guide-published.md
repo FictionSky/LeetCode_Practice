@@ -31,7 +31,11 @@ categories:
 - 示例里的短代码如果只是想展示给读者看，请放进代码块；如果要渲染效果，就使用 `shortcode{}` 或 `render{}`。
 - 颜色类、徽章类依赖站点额外 CSS；换主题或删除额外 CSS 后可能失效。
 
-**系统已有规范：算法核心专题标签（推荐必建）**
+
+
+**系统已有规范**
+关于categories,选择slug为leetcode,其他不添加
+
 本站已在 WordPress 后台预建了标准的算法核心专题标签，在写leetcode算法题解文章时，Frontmatter 的 `tags` 字段**必须且只能**填写以下已有的标签别名（Slug），严禁直接填写中文名称，否则发布脚本会因找不到对应数据而报错：
 - 哈希表：`hash-table`
 - 数组：`array`
@@ -528,15 +532,11 @@ shortcode{
 
 普通提示：
 
-shortcode{
-[alert color="blue"]这是一条普通提示。[/alert]
-}
-
-带标题和图标：
-
-shortcode{
-[alert color="orange" title="注意" icon="exclamation-triangle"]这里需要考虑边界条件。[/alert]
-}
+[admonition color="blue" title="核心思路" icon="lightbulb-o"]
+第一步：先判断两字符串长度是否相等，如果不等直接返回 false。
+第二步：利用一个长度为 26 的数组作为哈希表。第一次遍历 s 时记录各字符出现的次数；第二次遍历 t 时扣减对应字符的次数。
+第三步：如果在遍历 t 的过程中，对应字符的频次扣减后小于 0，说明 t 包含了一些额外的字符，可以直接返回 false。
+[/admonition]
 
 成功提示：
 
@@ -1023,3 +1023,7 @@ render{
 - KaTeX 的 `$...$` 会和美元符号冲突，普通美元符号写 `\$`。
 - `render{}`、`shortcode{}`、`html{}`、`math{}` 适合大多数正文场景；复杂嵌套结构继续使用旧围栏最稳。
 - 如果本文档里的短代码示例在发布后被执行了，可以把 `[` 写成 `&#91;` 来强制显示原文。
+
+
+## 25.注意
+- `render{}`仅仅只是个函数,不需要在开头将全文放入`render{}`里

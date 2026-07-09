@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <unordered_map>
 using namespace std;
 
 void printValue(bool value) {
@@ -54,9 +54,29 @@ public:
         // - 先想清楚：在一次扫描过程中，哪些信息需要被及时记录下来。
         // - 考虑是否可以用额外空间换取更快的查找速度。
 
-        (void)s;
-        (void)t;
-        return false;
+        
+        if(s.size() != t.size())
+        {
+            return false;
+        }
+
+        int count[26] = {0};
+        
+        for (char c:s)
+        {
+            count[c - 'a']++;
+        }
+
+        for (char c:t)
+        {
+            count[c - 'a']--;
+            if (count[c - 'a'] < 0)
+            {
+                return false;
+            }
+        }
+        return true;
+
     }
 };
 
