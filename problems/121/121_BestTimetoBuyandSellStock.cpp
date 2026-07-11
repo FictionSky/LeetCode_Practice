@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <algorithm>
 using namespace std;
 
 void printValue(bool value) {
@@ -53,9 +53,23 @@ public:
         // 入门提示：
         // - 从左到右扫描时，先找出最关键、必须维护的状态量。
         // - 思考是否可以在每一步 O(1) 地更新当前最优答案。
-
-        (void)prices;
-        return 0;
+        int profit_old,profit_today,profit_best,min_price;
+        profit_old= 0;
+        profit_today = 0;
+        profit_best = 0;
+        
+        for (int i = 0; i < (prices.size()); ++i){
+            if(i == 0){
+                min_price = prices[i];
+            }
+            else{
+                min_price = min(min_price,prices[i-1]);
+            }
+            profit_today = prices[i] - min_price;
+            profit_old = max(profit_old,profit_today);
+        }
+        profit_best = profit_old;
+        return profit_best;
     }
 };
 
@@ -76,5 +90,6 @@ int main() {
     cout << "只需要补全 maxProfit() 的 TODO 区域，再重新运行本地样例。" << "\n\n";
     runCase("示例 1", {7, 1, 5, 3, 6, 4}, 5);
     runCase("示例 2", {7, 6, 4, 3, 1}, 0);
+    runCase("示例 3", {3,2,6,5,0,3}, 4);
     return 0;
 }

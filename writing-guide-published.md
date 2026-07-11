@@ -35,7 +35,7 @@ categories:
 
 **系统已有规范**
 关于categories,选择slug为leetcode,其他不添加
-
+blog不要提及代码文件名称与路径，写的是面向读者的blog，不要有你我这种称呼
 本站已在 WordPress 后台预建了适配 LeetCode 刷题的常用专题标签。在写 LeetCode 算法题解文章时，Frontmatter 的 `tags` 字段**必须且只能**填写以下已有标签的别名（Slug），严禁直接填写中文名称，否则发布脚本会因找不到对应数据而报错：
 
 - 哈希表：`hash-table`
