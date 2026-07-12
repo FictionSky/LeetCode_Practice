@@ -54,8 +54,56 @@ public:
         // - 下笔前先用一句话写清楚状态定义。
         // - 先从更小子问题如何转移到当前问题开始想。
 
-        (void)nums;
-        return 0;
+        // ------------初版一----------------------
+
+        // int result_c = 0;
+        // int result_best = nums[0];
+        // for (int i = 0; i < nums.size(); ++i){
+        //     if(result_c + nums[i] < 0 ){
+        //         result_c = 0;
+        //         result_best = max(result_best,nums[i]);
+        //         continue;
+        //     }
+        //     else{
+        //         if(result_best < result_c + nums[i]){
+        //             result_best =result_c + nums[i];
+        //             result_c = result_best;
+        //         }
+        //         else{
+        //             result_c = result_c + nums[i];
+        //         }
+        //     }
+            
+        // }
+        // return result_best;
+
+        // --------------------------------------------
+        // ----------------优化后  贪心算法-------
+
+        // int result = nums[0];
+        // int count = 0;
+        // for (int i = 0; i < nums.size(); i++) {
+        //     count += nums[i];
+        //     if (count > result) { // 取区间累计的最大值（相当于不断确定最大子序终止位置）
+        //         result = count;
+        //     }
+        //     if (count <= 0) count = 0; // 相当于重置最大子序起始位置，因为遇到负数一定是拉低总和
+        // }
+        // return result;
+
+        // --------------------------------------------
+        // ----------------动态规划-------
+        int dp = nums[0];
+        int result = nums[0];
+
+        for(int i = 1; i < nums.size(); ++i){
+            dp = max(dp + nums[i],nums[i]);
+
+            result = max(result, dp);
+        }
+        return result;
+
+
     }
 };
 
